@@ -5,6 +5,7 @@ BITS 64
 ; syscall numbers
 %assign SYS_READ 0x0
 %assign SYS_WRITE 0x1
+%assign SYS_NANOSLEEP 0x23
 %assign SYS_EXIT 0x3c
 
 section .rodata
@@ -15,6 +16,9 @@ msg_err_len equ $-msg_err
 msg_ok db `Good job!\n`,0
 msg_ok_len equ $-msg_ok
 
+timespec:
+  tv_sec  dq 3 ; seconds
+  tv_nsec dq 0 ; nanoseconds
 
 section .mytext progbits alloc exec write align=16
 global _start:
@@ -47,6 +51,13 @@ global _start:
   syscall
 %endmacro
 
+%macro sys_nanosleep 0
+  mov eax, SYS_NANOSLEEP
+  mov edi, timespec
+  xor esi, esi
+  syscall
+%endmacro
+
 %macro encrypt_below 0
   ; key
   mov rax, [rcx]
@@ -76,6 +87,8 @@ _start:
   sys_write msg_input, msg_input_len
   sub rsp, 16
   sys_read rsp, 16
+  ; just for annoyence
+  sys_nanosleep
   ; pointer to input
   mov rcx, rsp
   dec rcx
