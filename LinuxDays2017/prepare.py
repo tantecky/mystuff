@@ -29,3 +29,12 @@ for enc_start, key in zip(enc_starts, keys):
     cmd = 'wox {} @ {}!{}'.format(key, enc, num_bytes)
     print(cmd)
     r2.cmd(cmd)
+
+#  set number of sections to 0
+#  cripples objdump and gdb
+cmd = 'e io.va = false'
+print(cmd)
+r2.cmd(cmd)
+cmd = 'w0 1 @ 0x3c'
+print(cmd)
+r2.cmd(cmd)
