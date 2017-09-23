@@ -1,0 +1,6 @@
+eco zenburn
+e scr.utf8 = true
+e cfg.fortunes.type=tips
+e asm.cmtright = 1
+e asm.bytes = 0
+e asm.cmtcol = 51
