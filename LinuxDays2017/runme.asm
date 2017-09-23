@@ -9,7 +9,7 @@ BITS 64
 %assign SYS_EXIT 0x3c
 
 section .rodata
-msg_input db '> ',0
+msg_input db 'password: ',0
 msg_input_len equ $-msg_input
 msg_err db `Wrong!\n`,0
 msg_err_len equ $-msg_err
