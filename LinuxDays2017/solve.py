@@ -4,6 +4,7 @@ import r2pipe
 r2 = r2pipe.open('./runme', ['-d'])
 
 while 'invalid' not in r2.cmd('s'):
+    #  do one step + seek to rip register
     r2.cmd('ds;sr rip')
 
     json = r2.cmdj('pdj 1')
