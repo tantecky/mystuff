@@ -15,3 +15,4 @@ $(OBJ_FILES): $(ASM_FILES)
 clean:
 	rm -f $(OBJ_FILES)
 	rm -f $(BIN_FILE)
+	rm -f *.bak
