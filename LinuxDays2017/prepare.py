@@ -5,8 +5,8 @@ import r2pipe
 r2 = r2pipe.open('./runme', ['-w'])
 
 sections = {section['name']: section for section in r2.cmdj('iSj')}
-text_section = sections['LOAD1']
-end_enc = text_section['vaddr'] + text_section['vsize']
+text_section = sections['.mytext']
+end_enc = int(text_section['vaddr']) + int(text_section['vsize'])
 print('Text section end: {}'.format(str(hex(end_enc))))
 
 hits = r2.cmdj('/cj inc rcx')
