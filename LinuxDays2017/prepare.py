@@ -16,7 +16,7 @@ keys = []
 for enc_start in enc_starts:
     #  + 3 inc rcx
     enc = str(hex(enc_start + 3))
-    key = str(hex(r2.cmdj('pdj 1 @ ' + enc)[0]['ptr']))
+    key = str(hex(r2.cmdj('pdj 1 @ ' + enc)[0]['val']))
     keys.append(key)
 
 #  do not encrypt the first block/letter
