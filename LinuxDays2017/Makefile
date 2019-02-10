@@ -1,3 +1,7 @@
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	LD := ld64.lld
+endif
 AS := nasm
 ASM_FILES := runme.asm
 OBJ_FILES := $(ASM_FILES:.asm=.o)
