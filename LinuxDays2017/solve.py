@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+import sys
 import r2pipe
 #  skip the first 3 syscalls
 SYSCALLS_2_SKIP = 3
 
 #  open the binary with attached debugger
-r2 = r2pipe.open('./runme', ['-d'])
+r2 = r2pipe.open('./runme', ['-d', '-2'])
 
 try:
     while 'invalid' not in r2.cmd('s'):

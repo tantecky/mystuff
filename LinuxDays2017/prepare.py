@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import sys
 import r2pipe
+from json import loads
 
 r2 = r2pipe.open('./runme', ['-w'])
 
@@ -9,7 +9,13 @@ text_section = sections['.mytext']
 end_enc = int(text_section['vaddr']) + int(text_section['vsize'])
 print('Text section end: {}'.format(str(hex(end_enc))))
 
-hits = r2.cmdj('/cj inc rcx')
+r2.cmd('/a inc rcx')
+
+hits = []
+for hit in loads(r2.cmd('fj')):
+    if 'hit' in hit['name']:
+        hits.append(hit)
+
 enc_starts = [hit['offset'] for hit in hits]
 keys = []
 
