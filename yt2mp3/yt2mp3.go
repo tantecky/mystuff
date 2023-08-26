@@ -27,7 +27,7 @@ func (app *App) loadFile(path string) {
 
 		url := ExtractVideoUrl(line)
 
-		app.songs = append(app.songs, Song{url: url})
+		app.songs = append(app.songs, Song{Url: url})
 
 	}
 
@@ -45,7 +45,7 @@ func (app *App) processSongs() {
 	fmt.Printf("Processing %d songs...\n", songCount)
 
 	for _, song := range app.songs {
-		fmt.Println(song)
+		song.Process()
 	}
 }
 
