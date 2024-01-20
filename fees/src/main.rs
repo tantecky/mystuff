@@ -5,6 +5,7 @@ use exchange::Exchange;
 use fiat::Fiat;
 use regex::Regex;
 use rust_decimal::prelude::ToPrimitive;
+use tokio::join;
 
 #[tokio::main]
 async fn main() {
@@ -17,15 +18,17 @@ async fn main() {
         data_source: "https://www.bitstamp.net/api/v2/ticker/btcusd".to_owned(),
     };
 
-    let fee = kraken.withdrawal_fee();
-    let one_btc_in_usd = fiat.btc_2_usd();
+    let fee_future = kraken.withdrawal_fee();
+    let fiat_future = fiat.btc_2_usd();
 
-    match fee.await {
-        Ok(fee) => match one_btc_in_usd.await {
-            Ok(rate) => println!(
+    let (fee_result, fiat_result) = join!(fee_future, fiat_future);
+
+    match fee_result {
+        Ok(fee) => match fiat_result {
+            Ok(btc_2_usd) => println!(
                 "Kraken withdrawal fee {} BTC, {} USD",
                 fee,
-                fee.to_f64().unwrap() * rate
+                fee.to_f64().unwrap() * btc_2_usd
             ),
             Err(err) => panic!("{:?}", err),
         },

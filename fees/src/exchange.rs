@@ -17,6 +17,6 @@ impl Exchange {
 }
 
 fn extract_fee(exchange: &Exchange, data: &str) -> Result<Decimal, Error> {
-    let captures = exchange.fee_regex.captures(data).unwrap();
+    let captures = exchange.fee_regex.captures(data).expect("Fee not found");
     Ok(Decimal::from_str(&captures[1]).unwrap())
 }
