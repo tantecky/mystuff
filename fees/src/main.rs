@@ -4,7 +4,7 @@ mod util;
 use exchange::Exchange;
 use fiat::Fiat;
 use regex::Regex;
-use rust_decimal::prelude::ToPrimitive;
+use std::process::Command;
 use tokio::join;
 
 #[tokio::main]
@@ -26,13 +26,15 @@ async fn main() {
     match fee_result {
         Ok(fee) => match fiat_result {
             Ok(btc_2_usd) => println!(
-                "Kraken withdrawal fee {} BTC, {} USD",
+                "Kraken withdrawal fee {} BTC = {} USD",
                 fee,
-                fee.to_f64().unwrap() * btc_2_usd
+                fee * btc_2_usd
             ),
             Err(err) => panic!("{:?}", err),
         },
 
         Err(err) => panic!("{:?}", err),
     }
+
+    let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
 }
