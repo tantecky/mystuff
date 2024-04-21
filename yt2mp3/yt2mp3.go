@@ -2,12 +2,16 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"sync"
 )
 
 type App struct {
-	songs []Song
+	songs       []Song
+	maxParallel uint64
 }
 
 func (app *App) loadFile(path string) {
@@ -42,15 +46,43 @@ func (app *App) processSongs() {
 		return
 	}
 
+	fmt.Printf("Parallel limit %d\n", app.maxParallel)
 	fmt.Printf("Processing %d songs...\n", songCount)
 
+	var wg sync.WaitGroup
+	wg.Add(songCount)
+	limiter := make(chan struct{}, app.maxParallel)
+
 	for _, song := range app.songs {
-		song.Process()
+		limiter <- struct{}{}
+		fmt.Printf("%s\n", song.Url)
+
+		go func(song Song) {
+			song.Process()
+			wg.Done()
+			<-limiter
+		}(song)
 	}
+
+	wg.Wait()
 }
 
 func main() {
-	app := App{}
+	var maxParallel uint64 = 6
+
+	if len(os.Args) == 2 {
+		providedMaxParallel, err := strconv.ParseUint(os.Args[1], 10, 32)
+
+		CheckErr(err)
+
+		if providedMaxParallel == 0 {
+			CheckErr(errors.New("maxParallel has to be > 0"))
+		}
+
+		maxParallel = providedMaxParallel
+	}
+
+	app := App{maxParallel: maxParallel}
 	app.loadFile("./list.txt")
 
 	app.processSongs()
