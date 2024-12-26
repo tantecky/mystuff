@@ -3,10 +3,11 @@ use std::{
     io::Read,
 };
 
+#[derive(Debug)]
 pub struct EncFile {
     path: String,
     orig_content: Vec<u8>,
-    decrypted_content: Vec<u8>,
+    pub decrypted_content: Vec<u8>,
     size: u64,
 }
 
@@ -51,6 +52,7 @@ impl EncFile {
         self.size = size;
         let mut buffer = vec![0; size as usize];
         file.read_exact(&mut buffer).expect("buffer overflow");
+        self.orig_content = buffer;
     }
     pub fn decrypt(&mut self, key: u32) {
         let key_size = key_size(key) as usize;
