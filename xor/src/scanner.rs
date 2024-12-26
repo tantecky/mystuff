@@ -24,6 +24,7 @@ pub struct Scanner {
     pub path: String,
     timestamp: Instant,
     done: usize,
+    found: usize,
 }
 
 impl Scanner {
@@ -31,6 +32,7 @@ impl Scanner {
         Scanner {
             path,
             done: 0,
+            found: 0,
             timestamp: Instant::now(),
         }
     }
@@ -51,7 +53,8 @@ impl Scanner {
             file.decrypt(key);
 
             if searcher.is_match(&file.decrypted_content) {
-                println!("Match key {:#x}", key);
+                // println!("Match key {:#x}", key);
+                self.found += 1;
             }
 
             self.done += 1;
@@ -67,8 +70,8 @@ impl Scanner {
         let speed = (REPORT_EACH as f64 * 1000.0) / self.timestamp.elapsed().as_millis() as f64;
         let percent = self.done as f64 / 0xFF_FF_FF_FFu64 as f64 * 100.0;
         print!(
-            "\rProcessing {}% ({} iters/sec)",
-            percent as usize, speed as usize
+            "\rProcessing {}% ({} iters/sec) found: {}",
+            percent as usize, speed as usize, self.found
         );
         io::stdout().flush().unwrap();
     }
