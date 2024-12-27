@@ -66,6 +66,12 @@ impl EncFile {
             self.decrypted_content[i] = self.orig_content[i] ^ key_vec[i % key_size];
         }
     }
+
+    pub fn write_decrypted(&mut self, key: u32) {
+        self.decrypt(key);
+        let filename = format!("{}.bin", key);
+        fs::write(filename, &self.decrypted_content).unwrap();
+    }
 }
 
 #[cfg(test)]

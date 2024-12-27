@@ -1,12 +1,30 @@
 use aho_corasick::AhoCorasick;
 use std::{
     io::{self, Write},
-    time::Instant,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc, Mutex,
+    },
+    thread::{self},
+    time::{Duration, Instant},
 };
 
 use crate::encfile::EncFile;
 
-const REPORT_EACH: usize = 10_000_000;
+const NUM_OF_THREADS: u32 = 12;
+const MAX_KEY: u32 = 0xFF_FF_FF_FF;
+
+fn lin_space(start: u32, end: u32, num: u32) -> Vec<u32> {
+    let mut res = vec![];
+    let step = (end - start) / (num - 1);
+
+    for i in 0..num - 1 {
+        res.push(i * step + start);
+    }
+
+    res.push(end);
+    res
+}
 
 fn magics() -> Vec<Vec<u8>> {
     vec![
@@ -20,11 +38,35 @@ fn magics() -> Vec<Vec<u8>> {
     ]
 }
 
+fn do_scan(
+    path: String,
+    key_start: u32,
+    key_end: u32,
+    done: Arc<AtomicU32>,
+    matches: Arc<Mutex<Vec<u32>>>,
+) {
+    let mut file = EncFile::new(path);
+    let searcher = AhoCorasick::new(magics()).unwrap();
+
+    for key in key_start..=key_end {
+        file.decrypt(key);
+
+        if searcher.is_match(&file.decrypted_content) {
+            let mut matches = matches.lock().unwrap();
+            matches.push(key);
+            drop(matches);
+            // println!("Match key {:#x}", key);
+        }
+
+        done.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
 pub struct Scanner {
     pub path: String,
     timestamp: Instant,
     done: usize,
-    found: usize,
+    matches: Arc<Mutex<Vec<u32>>>,
 }
 
 impl Scanner {
@@ -32,47 +74,74 @@ impl Scanner {
         Scanner {
             path,
             done: 0,
-            found: 0,
             timestamp: Instant::now(),
+            matches: Arc::new(Mutex::new(vec![])),
         }
     }
 
-    pub fn scan(&mut self) {
-        let key_start: u32 = 1;
-        let key_end: u32 = 0xFF_FF_FF_FF;
+    pub fn scan(&mut self) -> Vec<u32> {
+        let chunks = lin_space(0, MAX_KEY, NUM_OF_THREADS);
 
-        self.timestamp = Instant::now();
-        self.do_scan(self.path.to_owned(), key_start, key_end);
-    }
+        let mut handles = vec![];
+        let done = Arc::new(AtomicU32::new(0));
 
-    fn do_scan(&mut self, path: String, key_start: u32, key_end: u32) {
-        let mut file = EncFile::new(path);
-        let searcher = AhoCorasick::new(magics()).unwrap();
+        for i in 0..NUM_OF_THREADS as usize - 1 {
+            let key_start = chunks[i] + 1;
+            let key_end = chunks[i + 1];
+            let path = self.path.clone();
+            let done = done.clone();
+            let matches = self.matches.clone();
 
-        for key in key_start..=key_end {
-            file.decrypt(key);
+            let handle = thread::spawn(move || {
+                do_scan(path, key_start, key_end, done, matches);
+            });
+            handles.push(handle);
+        }
 
-            if searcher.is_match(&file.decrypted_content) {
-                // println!("Match key {:#x}", key);
-                self.found += 1;
-            }
+        let all_done = || handles.iter().all(|handle| handle.is_finished());
 
-            self.done += 1;
+        loop {
+            self.timestamp = Instant::now();
+            self.done = done.load(Ordering::Relaxed) as usize;
+            thread::sleep(Duration::from_millis(3000));
+            let done_now = done.load(Ordering::Relaxed) as usize;
+            let done_diff = done_now - self.done;
+            self.done = done_now;
+            self.report_progress(done_diff);
 
-            if self.done % REPORT_EACH == 0 {
-                self.report_progress();
-                self.timestamp = Instant::now();
+            if all_done() {
+                break;
             }
         }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        self.matches.lock().unwrap().clone()
     }
 
-    fn report_progress(&self) {
-        let speed = (REPORT_EACH as f64 * 1000.0) / self.timestamp.elapsed().as_millis() as f64;
+    fn report_progress(&self, done_diff: usize) {
+        let speed = (done_diff as f64 * 1000.0) / self.timestamp.elapsed().as_millis() as f64;
         let percent = self.done as f64 / 0xFF_FF_FF_FFu64 as f64 * 100.0;
+        let matches = self.matches.lock().unwrap();
+        let found = matches.len();
+        drop(matches);
+
         print!(
             "\rProcessing {}% ({} iters/sec) found: {}",
-            percent as usize, speed as usize, self.found
+            percent as usize, speed as usize, found
         );
         io::stdout().flush().unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_linspace() {
+        assert_eq!(lin_space(1, MAX_KEY, 4).len(), 4);
     }
 }
