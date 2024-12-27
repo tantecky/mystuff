@@ -69,7 +69,7 @@ impl EncFile {
 
     pub fn write_decrypted(&mut self, key: u32) {
         self.decrypt(key);
-        let filename = format!("{}.bin", key);
+        let filename = format!("{:x}.bin", key);
         fs::write(filename, &self.decrypted_content).unwrap();
     }
 }

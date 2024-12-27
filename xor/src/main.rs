@@ -16,7 +16,7 @@ fn main() {
     let keys = scanner.scan();
     let mut file = EncFile::new(args[2].to_owned());
 
-    print!("Writing files...");
+    print!("\nWriting files...");
 
     for key in keys {
         file.write_decrypted(key);
