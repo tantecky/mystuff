@@ -22,5 +22,5 @@ fn main() {
         file.write_decrypted(key);
     }
 
-    print!("done");
+    println!("done");
 }
