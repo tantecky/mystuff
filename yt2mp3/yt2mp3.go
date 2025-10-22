@@ -68,7 +68,7 @@ func (app *App) processSongs() {
 }
 
 func main() {
-	var maxParallel uint64 = 6
+	var maxParallel uint64 = 1
 
 	if len(os.Args) == 2 {
 		providedMaxParallel, err := strconv.ParseUint(os.Args[1], 10, 32)

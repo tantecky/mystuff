@@ -18,6 +18,8 @@ func (song *Song) Process() {
 	cmd := exec.Command(bin, "-f", "bestaudio", "-x", "--audio-format",
 		"mp3", "--audio-quality", "0", song.Url)
 
+	fmt.Printf("CMD: %s\n", cmd)
+
 	stdout, err := cmd.StdoutPipe()
 	CheckErr(err)
 
