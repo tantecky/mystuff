@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-const bin = "yt-dlp.exe"
+const bin = "./yt-dlp.exe"
 
 type Song struct {
 	Url string
